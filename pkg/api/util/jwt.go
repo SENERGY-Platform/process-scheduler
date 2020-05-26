@@ -25,7 +25,7 @@ import (
 )
 
 type Jwt interface {
-	ParseRequest(request *http.Request) (user string, roles []string, groups []string, err error)
+	ParseRequest(request *http.Request) (user string, err error)
 }
 
 type JwtImpl struct {
@@ -39,54 +39,28 @@ func NewJwt(config configuration.Config) Jwt {
 const PEM_BEGIN = "-----BEGIN PUBLIC KEY-----"
 const PEM_END = "-----END PUBLIC KEY-----"
 
-func (this JwtImpl) Parse(token string) (user string, roles []string, groups []string, err error) {
+func (this JwtImpl) Parse(token string) (user string, err error) {
 	claims := jwt.MapClaims{}
 	parser := jwt.Parser{}
 	_, _, err = parser.ParseUnverified(token, &claims)
 	if err != nil {
-		return user, roles, groups, err
+		return user, err
 	}
 	user, ok := claims["sub"].(string)
 	if !ok {
-		return user, roles, groups, errors.New("missing jwt sub")
-	}
-	realmAccess, ok := claims["realm_access"].(map[string]interface{})
-	if !ok {
-		return user, roles, groups, errors.New("missing jwt realm_access")
-	}
-	realmRoles, ok := realmAccess["roles"].([]interface{})
-	if !ok {
-		return user, roles, groups, errors.New("missing jwt realm_access.roles")
-	}
-	for _, role := range realmRoles {
-		roleName, ok := role.(string)
-		if !ok {
-			return user, roles, groups, errors.New("jwt realm_access.roles enty is not string")
-		}
-		roles = append(roles, roleName)
-	}
-	userGroups, ok := claims["groups"].([]interface{})
-	if !ok {
-		userGroups = []interface{}{}
-	}
-	for _, group := range userGroups {
-		groupName, ok := group.(string)
-		if !ok {
-			return user, roles, groups, errors.New("jwt realm_access.groups entry is not string")
-		}
-		groups = append(groups, groupName)
+		return user, errors.New("missing jwt sub")
 	}
 	return
 }
 
-func (this JwtImpl) ParseRequest(request *http.Request) (user string, roles []string, groups []string, err error) {
+func (this JwtImpl) ParseRequest(request *http.Request) (user string, err error) {
 	auth := request.Header.Get("Authorization")
 	if auth == "" {
 		err = errors.New("missing Authorization header")
 	}
 	authParts := strings.Split(auth, " ")
 	if len(authParts) != 2 {
-		return user, roles, groups, errors.New("expect auth string format like '<type> <token>'")
+		return user, errors.New("expect auth string format like '<type> <token>'")
 	}
 	return this.Parse(strings.Join(authParts[1:], " "))
 }

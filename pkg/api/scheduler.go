@@ -35,7 +35,7 @@ func init() {
 func SchedulerEndpoints(router *httprouter.Router, config configuration.Config, jwt util.Jwt, ctrl *scheduler.Scheduler) {
 
 	router.POST("/schedules", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		user, _, _, err := jwt.ParseRequest(request)
+		user, err := jwt.ParseRequest(request)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
@@ -63,7 +63,7 @@ func SchedulerEndpoints(router *httprouter.Router, config configuration.Config, 
 
 	router.PUT("/schedules/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		id := params.ByName("id")
-		user, _, _, err := jwt.ParseRequest(request)
+		user, err := jwt.ParseRequest(request)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
@@ -90,7 +90,7 @@ func SchedulerEndpoints(router *httprouter.Router, config configuration.Config, 
 	})
 
 	router.GET("/schedules", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		user, _, _, err := jwt.ParseRequest(request)
+		user, err := jwt.ParseRequest(request)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
@@ -109,7 +109,7 @@ func SchedulerEndpoints(router *httprouter.Router, config configuration.Config, 
 
 	router.DELETE("/schedules/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		id := params.ByName("id")
-		user, _, _, err := jwt.ParseRequest(request)
+		user, err := jwt.ParseRequest(request)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return

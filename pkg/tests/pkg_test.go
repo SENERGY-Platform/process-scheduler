@@ -21,7 +21,9 @@ import (
 	"github.com/SENERGY-Platform/process-scheduler/pkg"
 	"github.com/SENERGY-Platform/process-scheduler/pkg/configuration"
 	"github.com/SENERGY-Platform/process-scheduler/pkg/tests/services"
+	"github.com/dgrijalva/jwt-go"
 	"net"
+	"net/http"
 	"strconv"
 	"sync"
 	"testing"
@@ -68,6 +70,22 @@ func getFreePort() (string, error) {
 	}
 	defer listener.Close()
 	return strconv.Itoa(listener.Addr().(*net.TCPAddr).Port), nil
+}
+
+func SetMockAuthToken(req *http.Request, user string) (err error) {
+	claims := &jwt.StandardClaims{
+		ExpiresAt: 15000,
+		Issuer:    "test",
+		Subject:   user,
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	ss, err := token.SignedString([]byte("foobar"))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+ss)
+	return nil
 }
 
 func TestStartup(t *testing.T) {
