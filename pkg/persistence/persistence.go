@@ -71,8 +71,9 @@ func (this *Persistence) Disconnect() {
 }
 
 type Entry struct {
-	model.ScheduleEntry
-	User string `bson:"user"`
+	Entry model.ScheduleEntry `bson:"entry"`
+	User  string              `bson:"user"`
+	Id    string              `bson:"id"`
 }
 
 func (this *Persistence) collection() *mongo.Collection {
@@ -100,19 +101,21 @@ func (this *Persistence) GetAll() (result []model.ScheduleEntry, err error) {
 func (this *Persistence) Set(entry model.ScheduleEntry, user string) error {
 	ctx, _ := getTimeoutContext()
 	_, err := this.collection().ReplaceOne(ctx, bson.M{"user": user, "id": entry.Id}, Entry{
-		ScheduleEntry: entry,
-		User:          user,
+		Entry: entry,
+		User:  user,
+		Id:    entry.Id,
 	}, options.Replace().SetUpsert(true))
 	return err
 }
 
 func (this *Persistence) Get(id string, user string) (result model.ScheduleEntry, err error) {
 	ctx, _ := getTimeoutContext()
-	err = this.collection().FindOne(ctx, bson.M{"user": user, "id": id}).Decode(&result)
+	temp := Entry{}
+	err = this.collection().FindOne(ctx, bson.M{"user": user, "id": id}).Decode(&temp)
 	if err == mongo.ErrNoDocuments {
 		return result, model.ErrorNotFound
 	}
-	return result, err
+	return temp.Entry, err
 }
 
 func (this *Persistence) Remove(id string, user string) (err error) {
@@ -128,12 +131,12 @@ func (this *Persistence) List(user string) (result []model.ScheduleEntry, err er
 		return nil, err
 	}
 	for cursor.Next(context.Background()) {
-		entry := model.ScheduleEntry{}
+		entry := Entry{}
 		err = cursor.Decode(&entry)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, entry)
+		result = append(result, entry.Entry)
 	}
 	err = cursor.Err()
 	return

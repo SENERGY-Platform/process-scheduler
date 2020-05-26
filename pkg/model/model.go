@@ -42,7 +42,7 @@ func (this *ScheduleEntry) Validate() error {
 		return ErrorMissingProcessDeploymentId
 	}
 
-	_, err := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow).Parse(this.Cron)
+	_, err := cron.ParseStandard(this.Cron)
 	if err != nil {
 		return fmt.Errorf("invalid cron expression: %w", err)
 	}

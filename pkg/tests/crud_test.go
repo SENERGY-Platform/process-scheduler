@@ -38,39 +38,40 @@ func TestCrud(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	t.Log(config)
 	defer wg.Wait()
 	defer cancel()
 
 	id1 := ""
 	id2 := ""
 	id3 := ""
-	t.Run("create schedule user1 deployment-1", createSchedule(config, "* * * * * ? *", "deployment-1", "user1", &id1))
-	t.Run("create schedule user1 deployment-2", createSchedule(config, "* * * * * ? *", "deployment-2", "user1", &id2))
-	t.Run("create schedule user2 deployment-3", createSchedule(config, "* * * * * ? *", "deployment-3", "user2", &id3))
+	t.Run("create schedule user1 deployment-1", createSchedule(config, "* * * ? *", "deployment-1", "user1", &id1))
+	t.Run("create schedule user1 deployment-2", createSchedule(config, "* * * ? *", "deployment-2", "user1", &id2))
+	t.Run("create schedule user2 deployment-3", createSchedule(config, "* * * ? *", "deployment-3", "user2", &id3))
 
-	t.Run("read schedule user1 deployment-1", readSchedule(config, "* * * * * ? *", "deployment-1", "user1", id1))
-	t.Run("read schedule user1 deployment-2", readSchedule(config, "* * * * * ? *", "deployment-2", "user1", id2))
-	t.Run("read schedule user2 deployment-3", readSchedule(config, "* * * * * ? *", "deployment-3", "user2", id3))
+	t.Run("read schedule user1 deployment-1", readSchedule(config, "* * * ? *", "deployment-1", "user1", id1))
+	t.Run("read schedule user1 deployment-2", readSchedule(config, "* * * ? *", "deployment-2", "user1", id2))
+	t.Run("read schedule user2 deployment-3", readSchedule(config, "* * * ? *", "deployment-3", "user2", id3))
 
-	t.Run("update schedule user1 deployment-1", updateSchedule(config, "* * * * * * ?", "deployment-1", "user1", id1))
-	t.Run("update schedule user1 deployment-4", updateSchedule(config, "* * * * * ? *", "deployment-4", "user1", id2))
+	t.Run("update schedule user1 deployment-1", updateSchedule(config, "* * * * ?", "deployment-1", "user1", id1))
+	t.Run("update schedule user1 deployment-4", updateSchedule(config, "* * * ? *", "deployment-4", "user1", id2))
 
-	t.Run("read update schedule user1 deployment-1", readSchedule(config, "* * * * * * ?", "deployment-1", "user1", id1))
-	t.Run("read update schedule user1 deployment-4", readSchedule(config, "* * * * * ? *", "deployment-4", "user1", id2))
+	t.Run("read update schedule user1 deployment-1", readSchedule(config, "* * * * ?", "deployment-1", "user1", id1))
+	t.Run("read update schedule user1 deployment-4", readSchedule(config, "* * * ? *", "deployment-4", "user1", id2))
 
 	t.Run("list user1", listSchedules(config, "user1", []model.ScheduleEntry{{
 		Id:                  id1,
-		Cron:                "* * * * * * ?",
+		Cron:                "* * * * ?",
 		ProcessDeploymentId: "deployment-1",
 	}, {
 		Id:                  id2,
-		Cron:                "* * * * * ? *",
+		Cron:                "* * * ? *",
 		ProcessDeploymentId: "deployment-4",
 	}}))
 
 	t.Run("list user2", listSchedules(config, "user2", []model.ScheduleEntry{{
 		Id:                  id3,
-		Cron:                "* * * * * ? *",
+		Cron:                "* * * ? *",
 		ProcessDeploymentId: "deployment-3",
 	}}))
 
@@ -78,13 +79,13 @@ func TestCrud(t *testing.T) {
 
 	t.Run("list user1", listSchedules(config, "user1", []model.ScheduleEntry{{
 		Id:                  id1,
-		Cron:                "* * * * * * ?",
+		Cron:                "* * * * ?",
 		ProcessDeploymentId: "deployment-1",
 	}}))
 
 	t.Run("list user2", listSchedules(config, "user2", []model.ScheduleEntry{{
 		Id:                  id3,
-		Cron:                "* * * * * ? *",
+		Cron:                "* * * ? *",
 		ProcessDeploymentId: "deployment-3",
 	}}))
 }
@@ -184,6 +185,7 @@ func updateSchedule(config configuration.Config, cron string, deploymentId strin
 
 func readSchedule(config configuration.Config, cron string, deploymentId string, userId string, entryId string) func(t *testing.T) {
 	return func(t *testing.T) {
+		t.Skip("no read of single schedule implemented")
 		endpoint := "http://localhost:" + config.ApiPort
 		path := "/schedules/" + url.PathEscape(entryId)
 		method := "GET"
