@@ -20,6 +20,7 @@ import (
 	"context"
 	"github.com/SENERGY-Platform/process-scheduler/pkg/configuration"
 	"github.com/SENERGY-Platform/process-scheduler/pkg/model"
+	"github.com/SENERGY-Platform/process-scheduler/pkg/scheduler"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -34,7 +35,7 @@ type Persistence struct {
 	client *mongo.Client
 }
 
-func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (result *Persistence, err error) {
+func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (scheduler.Persistence, error) {
 	var parentCtx context.Context
 	if ctx != nil {
 		parentCtx = ctx
@@ -46,7 +47,7 @@ func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (
 	if err != nil {
 		return nil, err
 	}
-	result = &Persistence{config: config, client: client}
+	result := &Persistence{config: config, client: client}
 
 	if ctx != nil {
 		if wg != nil {
@@ -60,7 +61,7 @@ func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (
 			}
 		}()
 	}
-	return
+	return result, err
 }
 
 func (this *Persistence) Disconnect() {
