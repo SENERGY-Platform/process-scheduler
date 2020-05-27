@@ -26,7 +26,7 @@ import (
 func ProcessApiServer(ctx context.Context, wg *sync.WaitGroup) (url string, requests chan string) {
 	requests = make(chan string, 100)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requests <- r.URL.RawPath
+		requests <- r.URL.String()
 		w.WriteHeader(http.StatusOK)
 	}))
 	url = ts.URL
