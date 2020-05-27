@@ -32,6 +32,7 @@ import (
 )
 
 func TestCrud(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithCancel(context.Background())
 	wg, config, _, err := Start(ctx)
 	if err != nil {

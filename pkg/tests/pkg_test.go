@@ -26,7 +26,6 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
-	"testing"
 )
 
 func Start(ctx context.Context) (wg *sync.WaitGroup, config configuration.Config, processApiRequests chan string, err error) {
@@ -86,15 +85,4 @@ func SetMockAuthToken(req *http.Request, user string) (err error) {
 	}
 	req.Header.Set("Authorization", "Bearer "+ss)
 	return nil
-}
-
-func TestStartup(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	wg, _, _, err := Start(ctx)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	defer wg.Wait()
-	defer cancel()
 }

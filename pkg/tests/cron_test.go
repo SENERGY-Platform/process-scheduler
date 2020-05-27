@@ -23,6 +23,7 @@ import (
 )
 
 func TestCron(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithCancel(context.Background())
 	wg, config, processRequests, err := Start(ctx)
 	if err != nil {

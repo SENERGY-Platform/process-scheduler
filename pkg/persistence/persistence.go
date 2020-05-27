@@ -87,12 +87,12 @@ func (this *Persistence) GetAll() (result []model.ScheduleEntry, err error) {
 		return nil, err
 	}
 	for cursor.Next(context.Background()) {
-		entry := model.ScheduleEntry{}
+		entry := Entry{}
 		err = cursor.Decode(&entry)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, entry)
+		result = append(result, entry.Entry)
 	}
 	err = cursor.Err()
 	return
