@@ -77,11 +77,12 @@ func (this *Scheduler) Stop() {
 
 func (this *Scheduler) Add(entry model.ScheduleEntry, user string) (result model.ScheduleEntry, err error, code int) {
 	entry.Id = uuid.New().String()
+	entry.User = user
 	err = this.addCron(entry)
 	if err != nil {
 		return entry, err, http.StatusBadRequest
 	}
-	err = this.persistence.Set(entry, user)
+	err = this.persistence.Set(entry)
 	if err != nil {
 		this.removeCron(entry.Id)
 		return entry, err, http.StatusInternalServerError
@@ -90,6 +91,7 @@ func (this *Scheduler) Add(entry model.ScheduleEntry, user string) (result model
 }
 
 func (this *Scheduler) Update(entry model.ScheduleEntry, user string) (result model.ScheduleEntry, err error, code int) {
+	entry.User = user
 	old, err := this.persistence.Get(entry.Id, user)
 	if err != nil {
 		return result, err, getErrCode(err)
@@ -100,7 +102,7 @@ func (this *Scheduler) Update(entry model.ScheduleEntry, user string) (result mo
 		this.addCron(old) //try to recover
 		return entry, err, http.StatusBadRequest
 	}
-	err = this.persistence.Set(entry, user)
+	err = this.persistence.Set(entry)
 	if err != nil {
 		this.removeCron(entry.Id)
 		this.addCron(old) //try to recover
@@ -144,7 +146,7 @@ func (this *Scheduler) removeCron(externalId string) {
 }
 
 func (this *Scheduler) runJob(entry model.ScheduleEntry) {
-	this.processes.Execute(entry.ProcessDeploymentId)
+	this.processes.Execute(entry)
 }
 
 func getErrCode(err error) int {

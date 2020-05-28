@@ -18,15 +18,25 @@ package services
 
 import (
 	"context"
+	"github.com/SENERGY-Platform/process-scheduler/pkg/api/util"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"runtime/debug"
 	"sync"
 )
 
 func ProcessApiServer(ctx context.Context, wg *sync.WaitGroup) (url string, requests chan string) {
 	requests = make(chan string, 100)
+	jwt := util.NewJwt(nil)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requests <- r.URL.String()
+		user, err := jwt.ParseRequest(r)
+		if err != nil {
+			log.Println("ERROR:", err, r.Header.Get("Authorization"))
+			debug.PrintStack()
+			return
+		}
+		requests <- r.URL.String() + " " + user
 		w.WriteHeader(http.StatusOK)
 	}))
 	url = ts.URL

@@ -14,18 +14,29 @@
  * limitations under the License.
  */
 
-package scheduler
+package processapi
 
-import "github.com/SENERGY-Platform/process-scheduler/pkg/model"
+import (
+	"errors"
+	"github.com/dgrijalva/jwt-go"
+	"net/http"
+)
 
-type ProcessApi interface {
-	Execute(entry model.ScheduleEntry)
-}
+func SetAuthToken(req *http.Request, user string) (err error) {
+	if user == "" {
+		return errors.New("missing user")
+	}
+	claims := &jwt.StandardClaims{
+		ExpiresAt: 15000,
+		Issuer:    "process-scheduler",
+		Subject:   user,
+	}
 
-type Persistence interface {
-	GetAll() ([]model.ScheduleEntry, error)
-	Set(entry model.ScheduleEntry) error
-	Get(id string, userId string) (model.ScheduleEntry, error)
-	Remove(id string, user string) error
-	List(user string) ([]model.ScheduleEntry, error)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	ss, err := token.SignedString([]byte("ihopeyouareoneofourdevelopers"))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+ss)
+	return nil
 }

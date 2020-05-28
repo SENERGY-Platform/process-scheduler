@@ -24,6 +24,7 @@ import (
 
 type ScheduleEntry struct {
 	Id                  string `json:"id" bson:"id"`
+	User                string `json:"-" bson:"user"`
 	Cron                string `json:"cron" bson:"cron"`
 	ProcessDeploymentId string `json:"process_deployment_id" bson:"process_deployment_id"`
 }

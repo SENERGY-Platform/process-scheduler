@@ -23,6 +23,7 @@ import (
 	"errors"
 	"github.com/SENERGY-Platform/process-scheduler/pkg/configuration"
 	"github.com/SENERGY-Platform/process-scheduler/pkg/model"
+	"github.com/SENERGY-Platform/process-scheduler/pkg/processapi"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -112,7 +113,7 @@ func createSchedule(config configuration.Config, cron string, deploymentId strin
 		}
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 		req.WithContext(ctx)
-		err = SetMockAuthToken(req, userId)
+		err = processapi.SetAuthToken(req, userId)
 		if err != nil {
 			t.Error(err)
 			return
@@ -163,7 +164,7 @@ func updateSchedule(config configuration.Config, cron string, deploymentId strin
 		}
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 		req.WithContext(ctx)
-		err = SetMockAuthToken(req, userId)
+		err = processapi.SetAuthToken(req, userId)
 		if err != nil {
 			t.Error(err)
 			return
@@ -197,7 +198,7 @@ func readSchedule(config configuration.Config, cron string, deploymentId string,
 		}
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 		req.WithContext(ctx)
-		err = SetMockAuthToken(req, userId)
+		err = processapi.SetAuthToken(req, userId)
 		if err != nil {
 			t.Error(err)
 			return
@@ -244,7 +245,7 @@ func deleteSchedule(config configuration.Config, userId string, entryId string) 
 		}
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 		req.WithContext(ctx)
-		err = SetMockAuthToken(req, userId)
+		err = processapi.SetAuthToken(req, userId)
 		if err != nil {
 			t.Error(err)
 			return
@@ -277,7 +278,7 @@ func listSchedules(config configuration.Config, userId string, expected []model.
 		}
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 		req.WithContext(ctx)
-		err = SetMockAuthToken(req, userId)
+		err = processapi.SetAuthToken(req, userId)
 		if err != nil {
 			t.Error(err)
 			return

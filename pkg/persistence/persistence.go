@@ -70,12 +70,6 @@ func (this *Persistence) Disconnect() {
 	return
 }
 
-type Entry struct {
-	Entry model.ScheduleEntry `bson:"entry"`
-	User  string              `bson:"user"`
-	Id    string              `bson:"id"`
-}
-
 func (this *Persistence) collection() *mongo.Collection {
 	return this.client.Database(this.config.MongoTable).Collection(this.config.MongoCollection)
 }
@@ -87,35 +81,30 @@ func (this *Persistence) GetAll() (result []model.ScheduleEntry, err error) {
 		return nil, err
 	}
 	for cursor.Next(context.Background()) {
-		entry := Entry{}
+		entry := model.ScheduleEntry{}
 		err = cursor.Decode(&entry)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, entry.Entry)
+		result = append(result, entry)
 	}
 	err = cursor.Err()
 	return
 }
 
-func (this *Persistence) Set(entry model.ScheduleEntry, user string) error {
+func (this *Persistence) Set(entry model.ScheduleEntry) error {
 	ctx, _ := getTimeoutContext()
-	_, err := this.collection().ReplaceOne(ctx, bson.M{"user": user, "id": entry.Id}, Entry{
-		Entry: entry,
-		User:  user,
-		Id:    entry.Id,
-	}, options.Replace().SetUpsert(true))
+	_, err := this.collection().ReplaceOne(ctx, bson.M{"user": entry.User, "id": entry.Id}, entry, options.Replace().SetUpsert(true))
 	return err
 }
 
 func (this *Persistence) Get(id string, user string) (result model.ScheduleEntry, err error) {
 	ctx, _ := getTimeoutContext()
-	temp := Entry{}
-	err = this.collection().FindOne(ctx, bson.M{"user": user, "id": id}).Decode(&temp)
+	err = this.collection().FindOne(ctx, bson.M{"user": user, "id": id}).Decode(&result)
 	if err == mongo.ErrNoDocuments {
 		return result, model.ErrorNotFound
 	}
-	return temp.Entry, err
+	return result, err
 }
 
 func (this *Persistence) Remove(id string, user string) (err error) {
@@ -131,12 +120,12 @@ func (this *Persistence) List(user string) (result []model.ScheduleEntry, err er
 		return nil, err
 	}
 	for cursor.Next(context.Background()) {
-		entry := Entry{}
+		entry := model.ScheduleEntry{}
 		err = cursor.Decode(&entry)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, entry.Entry)
+		result = append(result, entry)
 	}
 	err = cursor.Err()
 	return

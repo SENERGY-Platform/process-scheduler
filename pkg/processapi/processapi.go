@@ -20,10 +20,12 @@ import (
 	"context"
 	"errors"
 	"github.com/SENERGY-Platform/process-scheduler/pkg/configuration"
+	"github.com/SENERGY-Platform/process-scheduler/pkg/model"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
+	"runtime/debug"
 	"time"
 )
 
@@ -35,8 +37,8 @@ func New(config configuration.Config) (result *ProcessApi) {
 	return &ProcessApi{config: config}
 }
 
-func (this ProcessApi) Execute(id string) {
-	endpoint := this.config.ProcessEndpoint + "/deployment/" + url.PathEscape(id) + "/start"
+func (this ProcessApi) Execute(entry model.ScheduleEntry) {
+	endpoint := this.config.ProcessEndpoint + "/deployment/" + url.PathEscape(entry.ProcessDeploymentId) + "/start"
 	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
 		log.Println("ERROR: decrypt new request", err)
@@ -44,6 +46,13 @@ func (this ProcessApi) Execute(id string) {
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	req.WithContext(ctx)
+
+	err = SetAuthToken(req, entry.User)
+	if err != nil {
+		log.Println("ERROR: SetAuthToken:", err)
+		debug.PrintStack()
+		return
+	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

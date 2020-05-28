@@ -46,7 +46,7 @@ func TestCron(t *testing.T) {
 
 	request := <-processRequests
 
-	if request != "/deployment/deployment-1/start" {
+	if request != "/deployment/deployment-1/start user1" {
 		t.Error(request)
 		return
 	}

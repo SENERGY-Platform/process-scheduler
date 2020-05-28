@@ -18,9 +18,6 @@ package services
 
 import (
 	"context"
-	"github.com/SENERGY-Platform/process-scheduler/pkg/configuration"
-	"github.com/SENERGY-Platform/process-scheduler/pkg/persistence"
-	"github.com/SENERGY-Platform/process-scheduler/pkg/scheduler"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -30,19 +27,6 @@ import (
 	"sync"
 	"time"
 )
-
-func Persistence(ctx context.Context, wg *sync.WaitGroup) (scheduler.Persistence, error) {
-	_, ip, err := MongoContainer(ctx, wg)
-	if err != nil {
-		return nil, err
-	}
-	config := &configuration.ConfigStruct{
-		MongoUrl:        "mongodb://" + ip + ":27017",
-		MongoTable:      "test",
-		MongoCollection: "test",
-	}
-	return persistence.New(ctx, wg, config)
-}
 
 func MongoContainer(ctx context.Context, wg *sync.WaitGroup) (hostPort string, ipAddress string, err error) {
 	pool, err := dockertest.NewPool("")
