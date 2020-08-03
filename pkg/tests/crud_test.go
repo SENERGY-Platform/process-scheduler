@@ -47,24 +47,27 @@ func TestCrud(t *testing.T) {
 	id1 := ""
 	id2 := ""
 	id3 := ""
-	t.Run("create schedule user1 deployment-1", createSchedule(config, "* * * ? *", "deployment-1", "user1", &id1))
-	t.Run("create schedule user1 deployment-2", createSchedule(config, "* * * ? *", "deployment-2", "user1", &id2))
-	t.Run("create schedule user2 deployment-3", createSchedule(config, "* * * ? *", "deployment-3", "user2", &id3))
+	alias1 := "alias1"
+	alias2 := "alias2"
+	t.Run("create schedule user1 deployment-1", createSchedule(config, "* * * ? *", "deployment-1", "user1", &id1, &alias1))
+	t.Run("create schedule user1 deployment-2", createSchedule(config, "* * * ? *", "deployment-2", "user1", &id2, nil))
+	t.Run("create schedule user2 deployment-3", createSchedule(config, "* * * ? *", "deployment-3", "user2", &id3, nil))
 
-	t.Run("read schedule user1 deployment-1", readSchedule(config, "* * * ? *", "deployment-1", "user1", id1))
-	t.Run("read schedule user1 deployment-2", readSchedule(config, "* * * ? *", "deployment-2", "user1", id2))
-	t.Run("read schedule user2 deployment-3", readSchedule(config, "* * * ? *", "deployment-3", "user2", id3))
+	t.Run("read schedule user1 deployment-1", readSchedule(config, "* * * ? *", "deployment-1", "user1", id1, &alias1))
+	t.Run("read schedule user1 deployment-2", readSchedule(config, "* * * ? *", "deployment-2", "user1", id2, nil))
+	t.Run("read schedule user2 deployment-3", readSchedule(config, "* * * ? *", "deployment-3", "user2", id3, nil))
 
-	t.Run("update schedule user1 deployment-1", updateSchedule(config, "* * * * ?", "deployment-1", "user1", id1))
-	t.Run("update schedule user1 deployment-4", updateSchedule(config, "* * * ? *", "deployment-4", "user1", id2))
+	t.Run("update schedule user1 deployment-1", updateSchedule(config, "* * * * ?", "deployment-1", "user1", id1, &alias2))
+	t.Run("update schedule user1 deployment-4", updateSchedule(config, "* * * ? *", "deployment-4", "user1", id2, nil))
 
-	t.Run("read update schedule user1 deployment-1", readSchedule(config, "* * * * ?", "deployment-1", "user1", id1))
-	t.Run("read update schedule user1 deployment-4", readSchedule(config, "* * * ? *", "deployment-4", "user1", id2))
+	t.Run("read update schedule user1 deployment-1", readSchedule(config, "* * * * ?", "deployment-1", "user1", id1, &alias2))
+	t.Run("read update schedule user1 deployment-4", readSchedule(config, "* * * ? *", "deployment-4", "user1", id2, nil))
 
 	t.Run("list user1", listSchedules(config, "user1", []model.ScheduleEntry{{
 		Id:                  id1,
 		Cron:                "* * * * ?",
 		ProcessDeploymentId: "deployment-1",
+		ProcessAlias:        &alias2,
 	}, {
 		Id:                  id2,
 		Cron:                "* * * ? *",
@@ -83,6 +86,7 @@ func TestCrud(t *testing.T) {
 		Id:                  id1,
 		Cron:                "* * * * ?",
 		ProcessDeploymentId: "deployment-1",
+		ProcessAlias:        &alias2,
 	}}))
 
 	t.Run("list user2", listSchedules(config, "user2", []model.ScheduleEntry{{
@@ -92,7 +96,7 @@ func TestCrud(t *testing.T) {
 	}}))
 }
 
-func createSchedule(config configuration.Config, cron string, deploymentId string, userId string, entryId *string) func(t *testing.T) {
+func createSchedule(config configuration.Config, cron string, deploymentId string, userId string, entryId *string, alias *string) func(t *testing.T) {
 	return func(t *testing.T) {
 		endpoint := "http://localhost:" + config.ApiPort
 		path := "/schedules"
@@ -101,6 +105,7 @@ func createSchedule(config configuration.Config, cron string, deploymentId strin
 		err := json.NewEncoder(buf).Encode(model.ScheduleEntry{
 			Cron:                cron,
 			ProcessDeploymentId: deploymentId,
+			ProcessAlias:        alias,
 		})
 		if err != nil {
 			t.Error(err)
@@ -143,7 +148,7 @@ func createSchedule(config configuration.Config, cron string, deploymentId strin
 	}
 }
 
-func updateSchedule(config configuration.Config, cron string, deploymentId string, userId string, entryId string) func(t *testing.T) {
+func updateSchedule(config configuration.Config, cron string, deploymentId string, userId string, entryId string, alias *string) func(t *testing.T) {
 	return func(t *testing.T) {
 		endpoint := "http://localhost:" + config.ApiPort
 		path := "/schedules/" + url.PathEscape(entryId)
@@ -152,6 +157,7 @@ func updateSchedule(config configuration.Config, cron string, deploymentId strin
 		err := json.NewEncoder(buf).Encode(model.ScheduleEntry{
 			Cron:                cron,
 			ProcessDeploymentId: deploymentId,
+			ProcessAlias:        alias,
 		})
 		if err != nil {
 			t.Error(err)
@@ -185,7 +191,7 @@ func updateSchedule(config configuration.Config, cron string, deploymentId strin
 	}
 }
 
-func readSchedule(config configuration.Config, cron string, deploymentId string, userId string, entryId string) func(t *testing.T) {
+func readSchedule(config configuration.Config, cron string, deploymentId string, userId string, entryId string, alias *string) func(t *testing.T) {
 	return func(t *testing.T) {
 		t.Skip("no read of single schedule implemented")
 		endpoint := "http://localhost:" + config.ApiPort
@@ -229,6 +235,16 @@ func readSchedule(config configuration.Config, cron string, deploymentId string,
 		if result.Cron != cron {
 			t.Error(result.Cron, cron)
 			return
+		}
+		if result.ProcessAlias != nil || alias != nil {
+			if result.ProcessAlias == nil || alias == nil {
+				t.Error(result.Cron, cron)
+				return
+			}
+			if *result.ProcessAlias != *alias {
+				t.Error(result.Cron, cron)
+				return
+			}
 		}
 	}
 }

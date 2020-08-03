@@ -59,7 +59,7 @@ func TestInit(t *testing.T) {
 	}
 
 	id1 := ""
-	t.Run("create schedule user1 deployment-1", createSchedule(config, "* * * * *", "deployment-1", "user1", &id1))
+	t.Run("create schedule user1 deployment-1", createSchedule(config, "* * * * *", "deployment-1", "user1", &id1, nil))
 
 	cancel2() //stop current connection
 	wg2.Wait()

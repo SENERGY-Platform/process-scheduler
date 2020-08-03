@@ -23,10 +23,11 @@ import (
 )
 
 type ScheduleEntry struct {
-	Id                  string `json:"id" bson:"id"`
-	User                string `json:"-" bson:"user"`
-	Cron                string `json:"cron" bson:"cron"`
-	ProcessDeploymentId string `json:"process_deployment_id" bson:"process_deployment_id"`
+	Id                  string  `json:"id" bson:"id"`
+	User                string  `json:"-" bson:"user"`
+	Cron                string  `json:"cron" bson:"cron"`
+	ProcessDeploymentId string  `json:"process_deployment_id" bson:"process_deployment_id"`
+	ProcessAlias        *string `json:"process_alias,omitempty" bson:"process_alias"`
 }
 
 var ErrorMissingCronExpr = errors.New("missing cron expression")
