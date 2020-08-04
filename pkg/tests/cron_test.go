@@ -58,3 +58,75 @@ func TestCron(t *testing.T) {
 		return
 	}
 }
+
+func TestCronWithSeconds(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	wg, config, processRequests, err := Start(ctx)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(config)
+	defer wg.Wait()
+	defer cancel()
+
+	id1 := ""
+	t.Run("create second schedule", createSchedule(config, "* * * * * *", "deployment-1", "user1", &id1, nil, nil, nil))
+	time.Sleep(1 * time.Second)
+	t.Run("delete id2", deleteSchedule(config, "user1", id1))
+
+	if len(processRequests) != 1 {
+		t.Error(len(processRequests))
+		return
+	}
+
+	request := <-processRequests
+
+	if request != "/deployment/deployment-1/start user1" {
+		t.Error(request)
+		return
+	}
+
+	time.Sleep(2 * time.Second)
+
+	if len(processRequests) != 0 {
+		t.Error(len(processRequests))
+		return
+	}
+}
+
+func TestCronWithSomeSeconds(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	wg, config, processRequests, err := Start(ctx)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(config)
+	defer wg.Wait()
+	defer cancel()
+
+	id1 := ""
+	t.Run("create second schedule", createSchedule(config, "*/2 * * * * *", "deployment-1", "user1", &id1, nil, nil, nil))
+	time.Sleep(2 * time.Second)
+	t.Run("delete id2", deleteSchedule(config, "user1", id1))
+
+	if len(processRequests) != 1 {
+		t.Error(len(processRequests))
+		return
+	}
+
+	request := <-processRequests
+
+	if request != "/deployment/deployment-1/start user1" {
+		t.Error(request)
+		return
+	}
+
+	time.Sleep(3 * time.Second)
+
+	if len(processRequests) != 0 {
+		t.Error(len(processRequests))
+		return
+	}
+}

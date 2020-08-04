@@ -41,7 +41,9 @@ func New(persistence Persistence, processes ProcessApi) *Scheduler {
 }
 
 func (this *Scheduler) Start(ctx context.Context, wg *sync.WaitGroup) error {
-	this.cron = cron.New()
+	this.cron = cron.New(cron.WithParser(cron.NewParser(
+		cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor,
+	)))
 	entries, err := this.persistence.GetAll()
 	if err != nil {
 		return err
