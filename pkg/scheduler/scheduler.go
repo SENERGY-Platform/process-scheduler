@@ -120,8 +120,8 @@ func (this *Scheduler) Delete(id string, user string) (err error, code int) {
 	return nil, http.StatusOK
 }
 
-func (this *Scheduler) List(user string) (result []model.ScheduleEntry, err error, code int) {
-	result, err = this.persistence.List(user)
+func (this *Scheduler) List(user string, createdBy *string) (result []model.ScheduleEntry, err error, code int) {
+	result, err = this.persistence.List(user, createdBy)
 	return result, err, getErrCode(err)
 }
 

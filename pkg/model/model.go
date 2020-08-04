@@ -29,6 +29,7 @@ type ScheduleEntry struct {
 	ProcessDeploymentId string  `json:"process_deployment_id" bson:"process_deployment_id"`
 	ProcessAlias        *string `json:"process_alias,omitempty" bson:"process_alias"`
 	Disabled            *bool   `json:"disabled,omitempty" bson:"disabled"`
+	CreatedBy           *string `json:"created_by,omitempty" bson:"created_by"`
 }
 
 var ErrorMissingCronExpr = errors.New("missing cron expression")

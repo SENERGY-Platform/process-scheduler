@@ -51,19 +51,19 @@ func TestCrud(t *testing.T) {
 	alias2 := "alias2"
 	bTrue := true
 	bFalse := false
-	t.Run("create schedule user1 deployment-1", createSchedule(config, "* * * ? *", "deployment-1", "user1", &id1, &alias1, &bTrue))
-	t.Run("create schedule user1 deployment-2", createSchedule(config, "* * * ? *", "deployment-2", "user1", &id2, nil, nil))
-	t.Run("create schedule user2 deployment-3", createSchedule(config, "* * * ? *", "deployment-3", "user2", &id3, nil, nil))
+	t.Run("create schedule user1 deployment-1", createSchedule(config, "* * * ? *", "deployment-1", "user1", &id1, &alias1, &bTrue, nil))
+	t.Run("create schedule user1 deployment-2", createSchedule(config, "* * * ? *", "deployment-2", "user1", &id2, nil, nil, nil))
+	t.Run("create schedule user2 deployment-3", createSchedule(config, "* * * ? *", "deployment-3", "user2", &id3, nil, nil, nil))
 
-	t.Run("read schedule user1 deployment-1", readSchedule(config, "* * * ? *", "deployment-1", "user1", id1, &alias1, &bTrue))
-	t.Run("read schedule user1 deployment-2", readSchedule(config, "* * * ? *", "deployment-2", "user1", id2, nil, nil))
-	t.Run("read schedule user2 deployment-3", readSchedule(config, "* * * ? *", "deployment-3", "user2", id3, nil, nil))
+	t.Run("read schedule user1 deployment-1", readSchedule(config, "* * * ? *", "deployment-1", "user1", id1, &alias1, &bTrue, nil))
+	t.Run("read schedule user1 deployment-2", readSchedule(config, "* * * ? *", "deployment-2", "user1", id2, nil, nil, nil))
+	t.Run("read schedule user2 deployment-3", readSchedule(config, "* * * ? *", "deployment-3", "user2", id3, nil, nil, nil))
 
-	t.Run("update schedule user1 deployment-1", updateSchedule(config, "* * * * ?", "deployment-1", "user1", id1, &alias2, &bFalse))
-	t.Run("update schedule user1 deployment-4", updateSchedule(config, "* * * ? *", "deployment-4", "user1", id2, nil, nil))
+	t.Run("update schedule user1 deployment-1", updateSchedule(config, "* * * * ?", "deployment-1", "user1", id1, &alias2, &bFalse, nil))
+	t.Run("update schedule user1 deployment-4", updateSchedule(config, "* * * ? *", "deployment-4", "user1", id2, nil, nil, nil))
 
-	t.Run("read update schedule user1 deployment-1", readSchedule(config, "* * * * ?", "deployment-1", "user1", id1, &alias2, &bFalse))
-	t.Run("read update schedule user1 deployment-4", readSchedule(config, "* * * ? *", "deployment-4", "user1", id2, nil, nil))
+	t.Run("read update schedule user1 deployment-1", readSchedule(config, "* * * * ?", "deployment-1", "user1", id1, &alias2, &bFalse, nil))
+	t.Run("read update schedule user1 deployment-4", readSchedule(config, "* * * ? *", "deployment-4", "user1", id2, nil, nil, nil))
 
 	t.Run("list user1", listSchedules(config, "user1", []model.ScheduleEntry{{
 		Id:                  id1,
@@ -75,13 +75,13 @@ func TestCrud(t *testing.T) {
 		Id:                  id2,
 		Cron:                "* * * ? *",
 		ProcessDeploymentId: "deployment-4",
-	}}))
+	}}, nil))
 
 	t.Run("list user2", listSchedules(config, "user2", []model.ScheduleEntry{{
 		Id:                  id3,
 		Cron:                "* * * ? *",
 		ProcessDeploymentId: "deployment-3",
-	}}))
+	}}, nil))
 
 	t.Run("delete id2", deleteSchedule(config, "user1", id2))
 
@@ -91,16 +91,40 @@ func TestCrud(t *testing.T) {
 		ProcessDeploymentId: "deployment-1",
 		ProcessAlias:        &alias2,
 		Disabled:            &bFalse,
-	}}))
+	}}, nil))
 
 	t.Run("list user2", listSchedules(config, "user2", []model.ScheduleEntry{{
 		Id:                  id3,
 		Cron:                "* * * ? *",
 		ProcessDeploymentId: "deployment-3",
-	}}))
+	}}, nil))
+
+	t1 := "t1"
+	t2 := "t2"
+	t.Run("create schedule user1 deployment-1 created_by=t1", createSchedule(config, "* * * ? *", "deployment-1", "user1", &id1, nil, nil, &t1))
+	t.Run("create schedule user1 deployment-1 created_by=t2", createSchedule(config, "* * * ? *", "deployment-1", "user1", &id2, nil, nil, &t2))
+	t.Run("list user1 t1", listSchedules(config, "user1", []model.ScheduleEntry{{
+		Id:                  id1,
+		Cron:                "* * * ? *",
+		ProcessDeploymentId: "deployment-1",
+		ProcessAlias:        nil,
+		Disabled:            nil,
+		CreatedBy:           &t1,
+	}}, &t1))
+	t.Run("list user1 t2", listSchedules(config, "user1", []model.ScheduleEntry{{
+		Id:                  id2,
+		Cron:                "* * * ? *",
+		ProcessDeploymentId: "deployment-1",
+		ProcessAlias:        nil,
+		Disabled:            nil,
+		CreatedBy:           &t2,
+	}}, &t2))
+	t.Run("delete id1", deleteSchedule(config, "user1", id1))
+	t.Run("delete id2", deleteSchedule(config, "user1", id2))
+
 }
 
-func createSchedule(config configuration.Config, cron string, deploymentId string, userId string, entryId *string, alias *string, disabled *bool) func(t *testing.T) {
+func createSchedule(config configuration.Config, cron string, deploymentId string, userId string, entryId *string, alias *string, disabled *bool, createdBy *string) func(t *testing.T) {
 	return func(t *testing.T) {
 		endpoint := "http://localhost:" + config.ApiPort
 		path := "/schedules"
@@ -111,6 +135,7 @@ func createSchedule(config configuration.Config, cron string, deploymentId strin
 			ProcessDeploymentId: deploymentId,
 			ProcessAlias:        alias,
 			Disabled:            disabled,
+			CreatedBy:           createdBy,
 		})
 		if err != nil {
 			t.Error(err)
@@ -153,7 +178,7 @@ func createSchedule(config configuration.Config, cron string, deploymentId strin
 	}
 }
 
-func updateSchedule(config configuration.Config, cron string, deploymentId string, userId string, entryId string, alias *string, disabled *bool) func(t *testing.T) {
+func updateSchedule(config configuration.Config, cron string, deploymentId string, userId string, entryId string, alias *string, disabled *bool, createdBy *string) func(t *testing.T) {
 	return func(t *testing.T) {
 		endpoint := "http://localhost:" + config.ApiPort
 		path := "/schedules/" + url.PathEscape(entryId)
@@ -164,6 +189,7 @@ func updateSchedule(config configuration.Config, cron string, deploymentId strin
 			ProcessDeploymentId: deploymentId,
 			ProcessAlias:        alias,
 			Disabled:            disabled,
+			CreatedBy:           createdBy,
 		})
 		if err != nil {
 			t.Error(err)
@@ -197,7 +223,7 @@ func updateSchedule(config configuration.Config, cron string, deploymentId strin
 	}
 }
 
-func readSchedule(config configuration.Config, cron string, deploymentId string, userId string, entryId string, alias *string, disabled *bool) func(t *testing.T) {
+func readSchedule(config configuration.Config, cron string, deploymentId string, userId string, entryId string, alias *string, disabled *bool, createdBy *string) func(t *testing.T) {
 	return func(t *testing.T) {
 		t.Skip("no read of single schedule implemented")
 		endpoint := "http://localhost:" + config.ApiPort
@@ -262,6 +288,16 @@ func readSchedule(config configuration.Config, cron string, deploymentId string,
 				return
 			}
 		}
+		if result.CreatedBy != nil || createdBy != nil {
+			if result.CreatedBy == nil || createdBy == nil {
+				t.Error(result.CreatedBy, createdBy)
+				return
+			}
+			if *result.CreatedBy != *createdBy {
+				t.Error(*result.CreatedBy, *createdBy)
+				return
+			}
+		}
 	}
 }
 
@@ -298,10 +334,13 @@ func deleteSchedule(config configuration.Config, userId string, entryId string) 
 	}
 }
 
-func listSchedules(config configuration.Config, userId string, expected []model.ScheduleEntry) func(t *testing.T) {
+func listSchedules(config configuration.Config, userId string, expected []model.ScheduleEntry, createdBy *string) func(t *testing.T) {
 	return func(t *testing.T) {
 		endpoint := "http://localhost:" + config.ApiPort
 		path := "/schedules"
+		if createdBy != nil {
+			path += "?created_by=" + *createdBy
+		}
 		method := "GET"
 		req, err := http.NewRequest(method, endpoint+path, nil)
 		if err != nil {

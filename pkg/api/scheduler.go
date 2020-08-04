@@ -95,7 +95,8 @@ func SchedulerEndpoints(router *httprouter.Router, config configuration.Config, 
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		result, err, code := ctrl.List(user)
+		createdBy := request.URL.Query().Get("created_by")
+		result, err, code := ctrl.List(user, &createdBy)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
 		}

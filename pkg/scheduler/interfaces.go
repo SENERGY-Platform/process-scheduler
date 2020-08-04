@@ -27,5 +27,5 @@ type Persistence interface {
 	Set(entry model.ScheduleEntry) error
 	Get(id string, userId string) (model.ScheduleEntry, error)
 	Remove(id string, user string) error
-	List(user string) ([]model.ScheduleEntry, error)
+	List(user string, createdBy *string) ([]model.ScheduleEntry, error)
 }

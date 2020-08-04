@@ -113,9 +113,13 @@ func (this *Persistence) Remove(id string, user string) (err error) {
 	return
 }
 
-func (this *Persistence) List(user string) (result []model.ScheduleEntry, err error) {
+func (this *Persistence) List(user string, createdBy *string) (result []model.ScheduleEntry, err error) {
+	filter := bson.M{"user": user}
+	if createdBy != nil && *createdBy != "" {
+		filter["created_by"] = *createdBy
+	}
 	ctx, _ := getTimeoutContext()
-	cursor, err := this.collection().Find(ctx, bson.M{"user": user})
+	cursor, err := this.collection().Find(ctx, filter)
 	if err != nil {
 		return nil, err
 	}

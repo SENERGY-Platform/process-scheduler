@@ -35,7 +35,7 @@ func TestCron(t *testing.T) {
 	defer cancel()
 
 	id1 := ""
-	t.Run("create schedule user1 deployment-1", createSchedule(config, "* * * * *", "deployment-1", "user1", &id1, nil, nil))
+	t.Run("create schedule user1 deployment-1", createSchedule(config, "* * * * *", "deployment-1", "user1", &id1, nil, nil, nil))
 	time.Sleep(61 * time.Second)
 	t.Run("delete id2", deleteSchedule(config, "user1", id1))
 
