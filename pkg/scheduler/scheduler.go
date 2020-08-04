@@ -126,6 +126,9 @@ func (this *Scheduler) List(user string) (result []model.ScheduleEntry, err erro
 }
 
 func (this *Scheduler) addCron(entry model.ScheduleEntry) error {
+	if entry.Disabled != nil && *entry.Disabled == true {
+		return nil
+	}
 	id, err := this.cron.AddFunc(entry.Cron, func() {
 		this.runJob(entry)
 	})
