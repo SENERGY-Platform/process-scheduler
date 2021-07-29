@@ -19,7 +19,7 @@ package util
 import (
 	"errors"
 	"github.com/SENERGY-Platform/process-scheduler/pkg/configuration"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	"net/http"
 	"strings"
 )
