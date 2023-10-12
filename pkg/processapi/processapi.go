@@ -21,7 +21,7 @@ import (
 	"errors"
 	"github.com/SENERGY-Platform/process-scheduler/pkg/configuration"
 	"github.com/SENERGY-Platform/process-scheduler/pkg/model"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -61,7 +61,7 @@ func (this ProcessApi) Execute(entry model.ScheduleEntry) {
 	}
 
 	defer resp.Body.Close()
-	temp, _ := ioutil.ReadAll(resp.Body) //ensure empty stream
+	temp, _ := io.ReadAll(resp.Body) //ensure empty stream
 	if resp.StatusCode != http.StatusOK {
 		err = errors.New("unexpected response code from " + endpoint)
 		log.Println("ERROR: ", err, resp.StatusCode, string(temp))

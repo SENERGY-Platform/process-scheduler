@@ -70,6 +70,15 @@ func TestInit(t *testing.T) {
 		return
 	}
 
+	//ensure thar the cron job will be executed exactly once
+	second := time.Now().Second()
+	if second < 5 {
+		time.Sleep(5 * time.Second)
+	}
+	if second > 50 {
+		time.Sleep(15 * time.Second)
+	}
+
 	t.Run("list user1", listSchedules(config, "user1", []model.ScheduleEntry{{
 		Id:                  id1,
 		Cron:                "* * * * *",

@@ -44,20 +44,24 @@ func SchedulerEndpoints(router *httprouter.Router, config configuration.Config, 
 		err = json.NewDecoder(request.Body).Decode(&entry)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
 		}
 		err = entry.Validate()
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
 		}
 		result, err, code := ctrl.Add(entry, user)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
+			return
 		}
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		err = json.NewEncoder(writer).Encode(result)
 		if err != nil {
 			log.Println("ERROR:", err)
 			debug.PrintStack()
+			return
 		}
 	})
 
@@ -72,20 +76,24 @@ func SchedulerEndpoints(router *httprouter.Router, config configuration.Config, 
 		err = json.NewDecoder(request.Body).Decode(&entry)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
 		}
 		err = entry.ValidateAndEnsureId(id)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
 		}
 		result, err, code := ctrl.Update(entry, user)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
+			return
 		}
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		err = json.NewEncoder(writer).Encode(result)
 		if err != nil {
 			log.Println("ERROR:", err)
 			debug.PrintStack()
+			return
 		}
 	})
 
@@ -99,12 +107,14 @@ func SchedulerEndpoints(router *httprouter.Router, config configuration.Config, 
 		result, err, code := ctrl.List(user, &createdBy)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
+			return
 		}
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		err = json.NewEncoder(writer).Encode(result)
 		if err != nil {
 			log.Println("ERROR:", err)
 			debug.PrintStack()
+			return
 		}
 	})
 
@@ -118,6 +128,7 @@ func SchedulerEndpoints(router *httprouter.Router, config configuration.Config, 
 		err, code := ctrl.Delete(id, user)
 		if err != nil {
 			http.Error(writer, err.Error(), code)
+			return
 		}
 		writer.WriteHeader(http.StatusOK)
 	})
