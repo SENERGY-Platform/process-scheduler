@@ -70,26 +70,25 @@ func TestInit(t *testing.T) {
 		return
 	}
 
-	//ensure thar the cron job will be executed exactly once
 	second := time.Now().Second()
-	if second < 5 {
-		time.Sleep(5 * time.Second)
-	}
 	if second > 50 {
 		time.Sleep(15 * time.Second)
 	}
-
+	startMinute := time.Now().Minute()
 	t.Run("list user1", listSchedules(config, "user1", []model.ScheduleEntry{{
 		Id:                  id1,
 		Cron:                "* * * * *",
 		ProcessDeploymentId: "deployment-1",
 	}}, nil))
 
-	time.Sleep(61 * time.Second)
+	time.Sleep(time.Minute)
 	t.Run("delete id2", deleteSchedule(config, "user1", id1))
 
-	if len(processApiRequests) != 1 {
-		t.Error(len(processApiRequests))
+	endMinute := time.Now().Minute()
+
+	expectedCalls := endMinute - startMinute
+	if len(processApiRequests) != expectedCalls {
+		t.Error(len(processApiRequests), expectedCalls)
 		return
 	}
 

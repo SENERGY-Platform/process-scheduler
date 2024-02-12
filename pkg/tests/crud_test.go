@@ -24,6 +24,7 @@ import (
 	"github.com/SENERGY-Platform/process-scheduler/pkg/configuration"
 	"github.com/SENERGY-Platform/process-scheduler/pkg/model"
 	"github.com/SENERGY-Platform/process-scheduler/pkg/processapi"
+	"log"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -141,6 +142,7 @@ func createSchedule(config configuration.Config, cron string, deploymentId strin
 			t.Error(err)
 			return
 		}
+		log.Println("HTTP-CALL=", method, endpoint+path)
 		req, err := http.NewRequest(method, endpoint+path, buf)
 		if err != nil {
 			t.Error(err)
@@ -195,6 +197,7 @@ func updateSchedule(config configuration.Config, cron string, deploymentId strin
 			t.Error(err)
 			return
 		}
+		log.Println("HTTP-CALL=", method, endpoint+path)
 		req, err := http.NewRequest(method, endpoint+path, buf)
 		if err != nil {
 			t.Error(err)
@@ -229,6 +232,7 @@ func readSchedule(config configuration.Config, cron string, deploymentId string,
 		endpoint := "http://localhost:" + config.ApiPort
 		path := "/schedules/" + url.PathEscape(entryId)
 		method := "GET"
+		log.Println("HTTP-CALL=", method, endpoint+path)
 		req, err := http.NewRequest(method, endpoint+path, nil)
 		if err != nil {
 			t.Error(err)
@@ -306,6 +310,7 @@ func deleteSchedule(config configuration.Config, userId string, entryId string) 
 		endpoint := "http://localhost:" + config.ApiPort
 		path := "/schedules/" + url.PathEscape(entryId)
 		method := "DELETE"
+		log.Println("HTTP-CALL=", method, endpoint+path)
 		req, err := http.NewRequest(method, endpoint+path, nil)
 		if err != nil {
 			t.Error(err)
@@ -342,6 +347,7 @@ func listSchedules(config configuration.Config, userId string, expected []model.
 			path += "?created_by=" + *createdBy
 		}
 		method := "GET"
+		log.Println("HTTP-CALL=", method, endpoint+path)
 		req, err := http.NewRequest(method, endpoint+path, nil)
 		if err != nil {
 			t.Error(err)
