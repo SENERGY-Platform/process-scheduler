@@ -18,14 +18,14 @@ package api
 
 import (
 	"encoding/json"
+	"net/http"
+	"runtime/debug"
+
 	"github.com/SENERGY-Platform/process-scheduler/pkg/api/util"
 	"github.com/SENERGY-Platform/process-scheduler/pkg/configuration"
 	"github.com/SENERGY-Platform/process-scheduler/pkg/model"
 	"github.com/SENERGY-Platform/process-scheduler/pkg/scheduler"
 	"github.com/julienschmidt/httprouter"
-	"log"
-	"net/http"
-	"runtime/debug"
 )
 
 func init() {
@@ -59,7 +59,7 @@ func SchedulerEndpoints(router *httprouter.Router, config configuration.Config, 
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		err = json.NewEncoder(writer).Encode(result)
 		if err != nil {
-			log.Println("ERROR:", err)
+			config.GetLogger().Error("unable to encode response", "error", err)
 			debug.PrintStack()
 			return
 		}
@@ -91,7 +91,7 @@ func SchedulerEndpoints(router *httprouter.Router, config configuration.Config, 
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		err = json.NewEncoder(writer).Encode(result)
 		if err != nil {
-			log.Println("ERROR:", err)
+			config.GetLogger().Error("unable to encode response", "error", err)
 			debug.PrintStack()
 			return
 		}
@@ -112,7 +112,7 @@ func SchedulerEndpoints(router *httprouter.Router, config configuration.Config, 
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		err = json.NewEncoder(writer).Encode(result)
 		if err != nil {
-			log.Println("ERROR:", err)
+			config.GetLogger().Error("unable to encode response", "error", err)
 			debug.PrintStack()
 			return
 		}

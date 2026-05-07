@@ -19,12 +19,13 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/SENERGY-Platform/process-scheduler/pkg"
-	"github.com/SENERGY-Platform/process-scheduler/pkg/configuration"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/SENERGY-Platform/process-scheduler/pkg"
+	"github.com/SENERGY-Platform/process-scheduler/pkg/configuration"
 )
 
 func main() {
@@ -40,6 +41,7 @@ func main() {
 
 	wg, err := pkg.Start(ctx, config)
 	if err != nil {
+		config.GetLogger().Error("FATAL: startup failed", "error", err)
 		log.Fatal(err)
 	}
 
@@ -47,7 +49,7 @@ func main() {
 		shutdown := make(chan os.Signal, 1)
 		signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 		sig := <-shutdown
-		log.Println("received shutdown signal", sig)
+		config.GetLogger().Info("shutdown", "signal", sig)
 		cancel()
 	}()
 

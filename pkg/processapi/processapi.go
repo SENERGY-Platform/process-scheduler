@@ -19,14 +19,14 @@ package processapi
 import (
 	"context"
 	"errors"
-	"github.com/SENERGY-Platform/process-scheduler/pkg/configuration"
-	"github.com/SENERGY-Platform/process-scheduler/pkg/model"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"runtime/debug"
 	"time"
+
+	"github.com/SENERGY-Platform/process-scheduler/pkg/configuration"
+	"github.com/SENERGY-Platform/process-scheduler/pkg/model"
 )
 
 type ProcessApi struct {
@@ -41,7 +41,7 @@ func (this ProcessApi) Execute(entry model.ScheduleEntry) {
 	endpoint := this.config.ProcessEndpoint + "/deployment/" + url.PathEscape(entry.ProcessDeploymentId) + "/start"
 	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
-		log.Println("ERROR: decrypt new request", err)
+		this.config.GetLogger().Error("decrypt new request", "error", err)
 		return
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
@@ -49,14 +49,14 @@ func (this ProcessApi) Execute(entry model.ScheduleEntry) {
 
 	err = SetAuthToken(req, entry.User)
 	if err != nil {
-		log.Println("ERROR: SetAuthToken:", err)
+		this.config.GetLogger().Error("SetAuthToken", "error", err)
 		debug.PrintStack()
 		return
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Println("ERROR: decrypt request do", err)
+		this.config.GetLogger().Error("decrypt response", "error", err)
 		return
 	}
 
@@ -64,7 +64,7 @@ func (this ProcessApi) Execute(entry model.ScheduleEntry) {
 	temp, _ := io.ReadAll(resp.Body) //ensure empty stream
 	if resp.StatusCode != http.StatusOK {
 		err = errors.New("unexpected response code from " + endpoint)
-		log.Println("ERROR: ", err, resp.StatusCode, string(temp))
+		this.config.GetLogger().Error("unexpected response code", "error", err, "status", resp.StatusCode, "body", string(temp))
 		return
 	}
 	return

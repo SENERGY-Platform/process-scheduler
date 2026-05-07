@@ -18,36 +18,39 @@ package api
 
 import (
 	"context"
-	"github.com/SENERGY-Platform/process-scheduler/pkg/api/util"
-	"github.com/SENERGY-Platform/process-scheduler/pkg/configuration"
-	"github.com/SENERGY-Platform/process-scheduler/pkg/scheduler"
-	"github.com/julienschmidt/httprouter"
+	"errors"
 	"log"
 	"net/http"
 	"reflect"
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/SENERGY-Platform/process-scheduler/pkg/api/util"
+	"github.com/SENERGY-Platform/process-scheduler/pkg/configuration"
+	"github.com/SENERGY-Platform/process-scheduler/pkg/scheduler"
+	"github.com/SENERGY-Platform/service-commons/pkg/accesslog"
+	"github.com/julienschmidt/httprouter"
 )
 
 var endpoints = []func(router *httprouter.Router, config configuration.Config, jwt util.Jwt, control *scheduler.Scheduler){}
 
-//starts http server; if wg is not nil it will be set as done when the server is stopped
+// starts http server; if wg is not nil it will be set as done when the server is stopped
 func Start(ctx context.Context, wg *sync.WaitGroup, config configuration.Config, ctrl *scheduler.Scheduler, jwt util.Jwt) (err error) {
-	log.Println("start api on " + config.ApiPort)
+	config.GetLogger().Info("start api on " + config.ApiPort)
 	router := Router(config, ctrl, jwt)
 	server := &http.Server{Addr: ":" + config.ApiPort, Handler: router, WriteTimeout: 10 * time.Second, ReadTimeout: 2 * time.Second, ReadHeaderTimeout: 2 * time.Second}
 	wg.Add(1)
 	go func() {
-		log.Println("Listening on ", server.Addr)
-		if err := server.ListenAndServe(); err != http.ErrServerClosed {
-			log.Println("ERROR: api server error", err)
+		config.GetLogger().Info("Listening on " + server.Addr)
+		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+			config.GetLogger().Error("FATAL: api server error", "error", err)
 			log.Fatal(err)
 		}
 	}()
 	go func() {
 		<-ctx.Done()
-		log.Println("DEBUG: api shutdown", server.Shutdown(context.Background()))
+		config.GetLogger().Info("api shutdown", "result", server.Shutdown(context.Background()))
 		wg.Done()
 	}()
 	return nil
@@ -56,10 +59,10 @@ func Start(ctx context.Context, wg *sync.WaitGroup, config configuration.Config,
 func Router(config configuration.Config, ctrl *scheduler.Scheduler, jwt util.Jwt) http.Handler {
 	router := httprouter.New()
 	for _, e := range endpoints {
-		log.Println("add endpoints: " + runtime.FuncForPC(reflect.ValueOf(e).Pointer()).Name())
+		config.GetLogger().Info("add endpoints", "endpoint", runtime.FuncForPC(reflect.ValueOf(e).Pointer()).Name())
 		e(router, config, jwt, ctrl)
 	}
-	log.Println("add logging and cors")
+	config.GetLogger().Info("add logging and cors")
 	corsHandler := util.NewCors(router)
-	return util.NewLogger(corsHandler)
+	return accesslog.New(corsHandler)
 }
