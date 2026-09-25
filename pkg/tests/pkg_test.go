@@ -39,7 +39,7 @@ func Start(ctx context.Context) (wg *sync.WaitGroup, config configuration.Config
 	config = &configuration.ConfigStruct{
 		ApiPort:         apiPort,
 		MongoUrl:        "mongodb://" + ip + ":27017",
-		MongoTable:      "test",
+		MongoDatabase:   "test",
 		MongoCollection: "test",
 	}
 	config.ProcessEndpoint, processApiRequests = services.ProcessApiServer(ctx, wg)

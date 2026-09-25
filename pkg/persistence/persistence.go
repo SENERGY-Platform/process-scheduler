@@ -18,6 +18,8 @@ package persistence
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"github.com/SENERGY-Platform/process-scheduler/pkg/configuration"
 	"github.com/SENERGY-Platform/process-scheduler/pkg/model"
 	"github.com/SENERGY-Platform/process-scheduler/pkg/scheduler"
@@ -35,15 +37,22 @@ type Persistence struct {
 	client *mongo.Client
 }
 
+var (
+	errEmptyDatabase   = errors.New("mongo database name must not be empty")
+	errMissingPassword = errors.New("mongo password must not be empty when a mongo user is set")
+)
+
 func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (scheduler.Persistence, error) {
+	if err := validateConfig(config); err != nil {
+		return nil, err
+	}
 	var parentCtx context.Context
 	if ctx != nil {
 		parentCtx = ctx
 	} else {
 		parentCtx = context.Background()
 	}
-	timeout, _ := context.WithTimeout(parentCtx, TIMEOUT)
-	client, err := mongo.Connect(timeout, options.Client().ApplyURI(config.MongoUrl))
+	client, err := connect(parentCtx, clientOptions(config), config.MongoDatabase, TIMEOUT)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +70,49 @@ func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (
 			}
 		}()
 	}
-	return result, err
+	return result, nil
+}
+
+// connect runs listCollections on database because Connect is lazy and ping needs no
+// authentication; unreachable servers and wrong or missing credentials then fail at startup.
+func connect(ctx context.Context, opts *options.ClientOptions, database string, timeout time.Duration) (*mongo.Client, error) {
+	connectCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	client, err := mongo.Connect(connectCtx, opts)
+	if err != nil {
+		return nil, err
+	}
+	listOpts := options.ListCollections().SetNameOnly(true).SetAuthorizedCollections(true)
+	if _, err = client.Database(database).ListCollectionNames(connectCtx, bson.D{}, listOpts); err != nil {
+		disconnectCtx, disconnectCancel := context.WithTimeout(context.Background(), timeout)
+		defer disconnectCancel()
+		_ = client.Disconnect(disconnectCtx)
+		return nil, fmt.Errorf("mongo startup check failed: %w", err)
+	}
+	return client, nil
+}
+
+func validateConfig(conf configuration.Config) error {
+	if conf.MongoDatabase == "" {
+		return errEmptyDatabase
+	}
+	if conf.MongoUser != "" && conf.MongoPassword == "" {
+		return errMissingPassword
+	}
+	return nil
+}
+
+// clientOptions applies the credentials after the URI so they replace any given in MONGO_URL.
+func clientOptions(conf configuration.Config) *options.ClientOptions {
+	opts := options.Client().ApplyURI(conf.MongoUrl)
+	if conf.MongoUser != "" {
+		opts.SetAuth(options.Credential{
+			Username:   conf.MongoUser,
+			Password:   conf.MongoPassword,
+			AuthSource: conf.MongoAuthSource,
+		})
+	}
+	return opts
 }
 
 func (this *Persistence) Disconnect() {
@@ -71,7 +122,7 @@ func (this *Persistence) Disconnect() {
 }
 
 func (this *Persistence) collection() *mongo.Collection {
-	return this.client.Database(this.config.MongoTable).Collection(this.config.MongoCollection)
+	return this.client.Database(this.config.MongoDatabase).Collection(this.config.MongoCollection)
 }
 
 func (this *Persistence) GetAll() (result []model.ScheduleEntry, err error) {

@@ -47,7 +47,7 @@ func TestInit(t *testing.T) {
 	config := &configuration.ConfigStruct{
 		ApiPort:         apiPort,
 		MongoUrl:        "mongodb://" + ip + ":27017",
-		MongoTable:      "test",
+		MongoDatabase:   "test",
 		MongoCollection: "test",
 	}
 	var processApiRequests chan string
