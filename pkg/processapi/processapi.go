@@ -38,6 +38,12 @@ func New(config configuration.Config) (result *ProcessApi) {
 }
 
 func (this ProcessApi) Execute(entry model.ScheduleEntry) {
+	this.Start(entry)
+}
+
+// Start calls the start endpoint of the deployment and reports whether the process engine skipped the run
+// because the deployment is switched off.
+func (this ProcessApi) Start(entry model.ScheduleEntry) (skipped bool) {
 	endpoint := this.config.ProcessEndpoint + "/deployment/" + url.PathEscape(entry.ProcessDeploymentId) + "/start"
 	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
@@ -62,6 +68,10 @@ func (this ProcessApi) Execute(entry model.ScheduleEntry) {
 
 	defer resp.Body.Close()
 	temp, _ := io.ReadAll(resp.Body) //ensure empty stream
+	if resp.StatusCode == http.StatusConflict {
+		this.config.GetLogger().Info("deployment is disabled, skipping start", "deployment", entry.ProcessDeploymentId)
+		return true
+	}
 	if resp.StatusCode != http.StatusOK {
 		err = errors.New("unexpected response code from " + endpoint)
 		this.config.GetLogger().Error("unexpected response code", "error", err, "status", resp.StatusCode, "body", string(temp))

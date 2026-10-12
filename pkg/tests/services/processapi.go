@@ -27,6 +27,11 @@ import (
 )
 
 func ProcessApiServer(ctx context.Context, wg *sync.WaitGroup) (url string, requests chan string) {
+	return ProcessApiServerWithStatus(ctx, wg, http.StatusOK)
+}
+
+// ProcessApiServerWithStatus answers every authenticated request with the given status code.
+func ProcessApiServerWithStatus(ctx context.Context, wg *sync.WaitGroup, status int) (url string, requests chan string) {
 	requests = make(chan string, 100)
 	jwt := util.NewJwt(nil)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +42,7 @@ func ProcessApiServer(ctx context.Context, wg *sync.WaitGroup) (url string, requ
 			return
 		}
 		requests <- r.URL.String() + " " + user
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(status)
 	}))
 	url = ts.URL
 	wg.Add(1)
