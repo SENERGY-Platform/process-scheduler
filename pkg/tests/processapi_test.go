@@ -19,8 +19,10 @@ package tests
 import (
 	"context"
 	"net/http"
+	"net/http/httptest"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/SENERGY-Platform/process-scheduler/pkg/configuration"
 	"github.com/SENERGY-Platform/process-scheduler/pkg/model"
@@ -57,5 +59,31 @@ func TestProcessApiStart(t *testing.T) {
 				t.Error("expected exactly one start request for deployment-1 as user1")
 			}
 		})
+	}
+}
+
+func TestProcessApiStartGivesUpOnAHangingEngine(t *testing.T) {
+	release := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-release:
+		case <-r.Context().Done():
+		}
+	}))
+	defer server.Close()
+	defer close(release)
+
+	config := &configuration.ConfigStruct{ProcessEndpoint: server.URL}
+	done := make(chan bool)
+	go func() {
+		done <- processapi.New(config).Start(model.ScheduleEntry{ProcessDeploymentId: "deployment-1", User: "user1"})
+	}()
+	select {
+	case skipped := <-done:
+		if skipped {
+			t.Error("a timed out start must not count as skipped")
+		}
+	case <-time.After(10 * time.Second):
+		t.Error("Start did not return within 10s although its request times out after 5s")
 	}
 }

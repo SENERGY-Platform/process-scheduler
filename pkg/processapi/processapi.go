@@ -45,13 +45,13 @@ func (this ProcessApi) Execute(entry model.ScheduleEntry) {
 // because the deployment is switched off.
 func (this ProcessApi) Start(entry model.ScheduleEntry) (skipped bool) {
 	endpoint := this.config.ProcessEndpoint + "/deployment/" + url.PathEscape(entry.ProcessDeploymentId) + "/start"
-	req, err := http.NewRequest("GET", endpoint, nil)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
 	if err != nil {
 		this.config.GetLogger().Error("decrypt new request", "error", err)
 		return
 	}
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	req.WithContext(ctx)
 
 	err = SetAuthToken(req, entry.User)
 	if err != nil {
