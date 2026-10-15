@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"net"
 	"net/http"
 	"reflect"
 	"runtime"
@@ -40,10 +41,15 @@ func Start(ctx context.Context, wg *sync.WaitGroup, config configuration.Config,
 	config.GetLogger().Info("start api on " + config.ApiPort)
 	router := Router(config, ctrl, jwt)
 	server := &http.Server{Addr: ":" + config.ApiPort, Handler: router, WriteTimeout: 10 * time.Second, ReadTimeout: 2 * time.Second, ReadHeaderTimeout: 2 * time.Second}
+	// Bind before returning, so the api accepts requests as soon as Start is done.
+	listener, err := net.Listen("tcp", server.Addr)
+	if err != nil {
+		return err
+	}
 	wg.Add(1)
 	go func() {
 		config.GetLogger().Info("Listening on " + server.Addr)
-		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+		if err := server.Serve(listener); !errors.Is(err, http.ErrServerClosed) {
 			config.GetLogger().Error("FATAL: api server error", "error", err)
 			log.Fatal(err)
 		}
